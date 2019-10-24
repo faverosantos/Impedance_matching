@@ -10,18 +10,16 @@ if __name__ == '__main__':
 
     ZSOURCE = complex(20, -20)
     ZLOAD = complex(50, -100)
+
     f = 1E9
 
     dBm = 27
     mW = 137
-    #rf.lumped_match_impedance(ZSOURCE,ZLOAD,f)
-    ZA = rf.add_shunt_capacitor(ZSOURCE, 4.3*1E-12,f)
-    ZA = rf.add_series_inductor(ZA, 1 * 3.9E-9, f)
-    ZA = rf.add_shunt_inductor(ZA, 1 * 2E-9, f)
-    ZA = rf.add_series_capacitor(ZA, 1 * 18E-12, f)
+    rf.lumped_match_impedance(ZSOURCE, ZLOAD,f)
+    ZA = rf.add_shunt_capacitor(ZLOAD, 0.886 * 1E-12, f)
+    ZSOURCE = rf.add_series_inductor(ZA, 7.611 * 1E-9, f)
+    print("ZLOAD: " + str(ZSOURCE))
 
-    #rf.add_series_capacitor(ZSOURCE, 1*1E-12,f)
-    #rf.add_series_inductor(ZSOURCE, 1 * 1E-9, f)
     #print(mW, " mW equals to ", rf.mW_2_dBm(mW), " dBm")
     #print(dBm, " dBm equals to ", rf.dBm_2_mW(dBm), " mW")
 
