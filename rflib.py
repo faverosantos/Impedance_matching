@@ -331,3 +331,175 @@ def example():
     #pp.title("Impedance matching for ZLOAD < ZSOURCE")
 
     pp.show()
+
+def add_shunt_capacitor(ZS, C, frequency):
+    # Y = G + jB
+    # admitância = condutância + j*susceptancia
+    # Z = R + JX
+    # impedância = resistência +j*reatância
+
+    #0. Define the source admitance YS
+    #1. Calculate the capacitive reactance XC
+    #2. Define the capactive impedance ZC
+    #3. Do the parallel(ZA) between XC and ZS
+    #4. Invert ZA into admitance(YA)
+
+    ZSOURCE = ZS
+    f = frequency
+    w = 2 * np.pi * f
+
+    # 0. Define the source admitance YS
+    YS = 1/ZS
+
+    # 1. Calculate the capacitive reactance (XC)
+    XC = -1 / (w * C)
+
+    # 2. Define the capactive impedance ZC
+    RC = 0
+    ZC = RC + 1j*XC
+
+    # 3. Do the parallel(ZA) between XC and ZS
+    ZA = ZS * ZC / (ZS + ZC)
+
+    # 4. Invert ZA into admitance(YA)
+    YA = 1 / ZA
+
+    # As a susceptance is being added, it should move along the constant susceptance circle
+    plot_constant_susceptance(YA, YS)
+    return ZA
+
+def add_series_capacitor(ZS, C, frequency):
+    # Y = G + jB
+    # admitância = condutância + j*susceptancia
+    # Z = R + JX
+    # impedância = resistência +j*reatância
+
+    #0. Define the source admitance YS
+    #1. Calculate the capacitive reactance XC
+    #2. Define the capactive impedance ZC
+    #3. Do the series (ZA) between XC and ZS
+
+    ZSOURCE = ZS
+    f = frequency
+    w = 2 * np.pi * f
+
+    # 1. Calculate the capacitive reactance (XC)
+    XC = -1 / (w * C)
+
+    # 2. Define the capactive impedance ZC
+    RC = 0
+    ZC = RC + 1j*XC
+
+    # 3. Do the series(ZA) between XC and ZS
+    ZA = ZS + ZC
+
+    # As a reactance is being added, it should move along the constant susceptance circle
+    plot_constant_reactance(ZA, ZS)
+    return ZA
+
+def add_shunt_inductor(ZS, L, frequency):
+    # Y = G + jB
+    # admitância = condutância + j*susceptancia
+    # Z = R + JX
+    # impedância = resistência +j*reatância
+
+    #0. Define the source admitance YS
+    #1. Calculate the inductive reactance XL
+    #2. Define the inductive impedance ZL
+    #3. Do the parallel(ZA) between XL and ZS
+    #4. Invert ZA into admitance(YA)
+
+    ZSOURCE = ZS
+    f = frequency
+    w = 2 * np.pi * f
+
+    # 0. Define the source admitance YS
+    YS = 1/ZS
+
+    # 1. Calculate the capacitive reactance (XL)
+    XL = w*L
+
+    # 2. Define the inductive impedance ZL
+    RL = 0
+    ZL = RL + 1j*XL
+
+    # 3. Do the parallel(ZA) between XC and ZS
+    ZA = ZS * ZL / (ZS + ZL)
+
+    # 4. Invert ZA into admitance(YA)
+    YA = 1 / ZA
+
+    # As a susceptance is being added, it should move along the constant susceptance circle
+    plot_constant_susceptance(YA, YS)
+    return ZA
+
+def add_series_inductor(ZS, L, frequency):
+    # Y = G + jB
+    # admitância = condutância + j*susceptancia
+    # Z = R + JX
+    # impedância = resistência +j*reatância
+
+    #0. Define the source admitance YS
+    #1. Calculate the capacitive reactance XC
+    #2. Define the capactive impedance ZC
+    #3. Do the series (ZA) between XC and ZS
+
+    ZSOURCE = ZS
+    f = frequency
+    w = 2 * np.pi * f
+
+    # 1. Calculate the inductive reactance (XL)
+    XL = w*L
+
+    # 2. Define the capactive impedance ZC
+    RL = 0
+    ZL = RL + 1j*XL
+
+    # 3. Do the series(ZA) between XC and ZS
+    ZA = ZS + ZL
+
+    # As a reactance is being added, it should move along the constant susceptance circle
+    plot_constant_reactance(ZA, ZS)
+    return ZA
+
+def plot_constant_reactance(ZA, ZS):
+    ZL_to_ZA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    step_size = (np.imag(ZA) - np.imag(ZS)) / 10
+    # print("Step size:", step_size)
+    for i in range(0, 11):
+        real = np.real(ZS)
+        imaginario = np.imag(ZS) + i * step_size
+        ZL_to_ZA[i] = [complex(real, imaginario)]
+
+    pp.figure(figsize=(6, 6))
+    ax = pp.subplot(1, 1, 1, projection='smith')
+    pp.plot([10, 100], markevery=1)
+
+    pp.plot(ZL_to_ZA, markevery=1, label="ZLOAD to ZA", equipoints=10, datatype=SmithAxes.Z_PARAMETER)
+
+    leg = pp.legend(loc="upper right", fontsize=10)
+    pp.title("ZS=" + str(ZS) + "\n" + "ZA=" + str(ZA), y=-0.01)
+    pp.show()
+
+def plot_constant_susceptance(YA, YS):
+
+    YS_to_YA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    step_size = (np.imag(YA) - np.imag(YS)) / 10
+    for i in range(0, 11):
+        real = np.real(YS)
+        imaginario = np.imag(YS) + i * step_size
+        YS_to_YA[i] = [complex(real, imaginario)]
+
+    pp.figure(figsize=(6, 6))
+    ax = pp.subplot(1, 1, 1, projection='smith')
+    pp.plot([10, 100], markevery=1)
+
+    pp.plot(YS_to_YA, markevery=1, label="YSOURCE to YA", equipoints=10, datatype=SmithAxes.Y_PARAMETER)
+
+    #leg = pp.legend(loc="lower right", fontsize=10)
+    pp.title("ZS="+str(1/YS)+"\n"+"ZA="+str(1/YA), y=-0.01)
+    pp.show()
+
+
