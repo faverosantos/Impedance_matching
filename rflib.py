@@ -7,6 +7,23 @@ from smithplot import SmithAxes
 from matplotlib import rcParams, pyplot as pp
 rcParams.update({"legend.numpoints": 3})
 
+class impedance:
+    def __init__(self):
+        self.toogle = 0
+        self.assign_element = 0
+        self.first_impedance = complex(0,0)
+        self.last_impedance = complex(0,0)
+        self.first_susceptance = complex(0,0)
+        self.last_susceptance = complex(0,0)
+        self.update_impedance = complex(0,0)
+        self.element_type = "0"
+        self.element_disposition = "p"
+
+
+
+impedance_handler = impedance()
+
+
 def degree_to_rad(degree):
     rad = degree*(np.pi/180)
     return rad
@@ -259,8 +276,17 @@ def add_shunt_capacitor(ZS, C, frequency):
     YA = 1 / ZA
 
     # As a susceptance is being added, it should move along the constant susceptance circle
-    plot_constant_susceptance(YA, YS)
-    return ZA
+    #plot_constant_susceptance(YA, YS)
+
+    YS_to_YA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    step_size = (np.imag(YA) - np.imag(YS)) / 10
+    for i in range(0, 11):
+        real = np.real(YS)
+        imaginario = np.imag(YS) + i * step_size
+        YS_to_YA[i] = [complex(real, imaginario)]
+
+    return ZA, YS_to_YA, "cte_susceptance"
 
 def add_series_capacitor(ZS, C, frequency):
     # Y = G + jB
@@ -288,8 +314,18 @@ def add_series_capacitor(ZS, C, frequency):
     ZA = ZS + ZC
 
     # As a reactance is being added, it should move along the constant susceptance circle
-    plot_constant_reactance(ZA, ZS)
-    return ZA
+    #plot_constant_reactance(ZA, ZS)
+
+    ZL_to_ZA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    step_size = (np.imag(ZA) - np.imag(ZS)) / 10
+    # print("Step size:", step_size)
+    for i in range(0, 11):
+        real = np.real(ZS)
+        imaginario = np.imag(ZS) + i * step_size
+        ZL_to_ZA[i] = [complex(real, imaginario)]
+
+    return ZA, ZL_to_ZA, "cte_reactance"
 
 def add_shunt_inductor(ZS, L, frequency):
     # Y = G + jB
@@ -324,8 +360,17 @@ def add_shunt_inductor(ZS, L, frequency):
     YA = 1 / ZA
 
     # As a susceptance is being added, it should move along the constant susceptance circle
-    plot_constant_susceptance(YA, YS)
-    return ZA
+    #plot_constant_susceptance(YA, YS)
+
+    YS_to_YA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+
+    step_size = (np.imag(YA) - np.imag(YS)) / 10
+    for i in range(0, 11):
+        real = np.real(YS)
+        imaginario = np.imag(YS) + i * step_size
+        YS_to_YA[i] = [complex(real, imaginario)]
+
+    return ZA, YS_to_YA, "cte_susceptance"
 
 def add_series_inductor(ZS, L, frequency):
     # Y = G + jB
@@ -353,10 +398,8 @@ def add_series_inductor(ZS, L, frequency):
     ZA = ZS + ZL
 
     # As a reactance is being added, it should move along the constant susceptance circle
-    plot_constant_reactance(ZA, ZS)
-    return ZA
+    #plot_constant_reactance(ZA, ZS)
 
-def plot_constant_reactance(ZA, ZS):
     ZL_to_ZA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
 
     step_size = (np.imag(ZA) - np.imag(ZS)) / 10
@@ -366,15 +409,16 @@ def plot_constant_reactance(ZA, ZS):
         imaginario = np.imag(ZS) + i * step_size
         ZL_to_ZA[i] = [complex(real, imaginario)]
 
-    pp.figure(figsize=(6, 6))
-    ax = pp.subplot(1, 1, 1, projection='smith')
-    pp.plot([10, 100], markevery=1)
+    return ZA, ZL_to_ZA, "cte_reactance"
 
-    pp.plot(ZL_to_ZA, markevery=1, label="ZLOAD to ZA", equipoints=10, datatype=SmithAxes.Z_PARAMETER)
+def plot_smith_movement(movement, type):
+    if type == "cte_reactance":
+        pp.plot(movement, markevery=1, equipoints=10, datatype=SmithAxes.Z_PARAMETER)
+    elif type == "cte_susceptance":
+        pp.plot(movement, markevery=1, equipoints=10, datatype=SmithAxes.Y_PARAMETER)
 
-    leg = pp.legend(loc="upper right", fontsize=10)
-    pp.title("ZS=" + str(ZS) + "\n" + "ZA=" + str(ZA), y=-0.01)
-    pp.show()
+    pp.draw()
+
 
 def plot_constant_susceptance(YA, YS):
 
@@ -394,6 +438,104 @@ def plot_constant_susceptance(YA, YS):
 
     #leg = pp.legend(loc="lower right", fontsize=10)
     pp.title("ZS="+str(1/YS)+"\n"+"ZA="+str(1/YA), y=-0.01)
+    #pp.show()
+
+
+
+def plot_smith_chart():
+    pp.subplot(1, 1, 1, projection='smith')
     pp.show()
+
+def update_smith_chart():
+    pp.plot(impedance_handler.update_impedance, label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER)
+    pp.draw()
+
+def on_press(event):
+    if event.button == 3:
+        pp.clf()
+
+    elif event.button == 1:
+        x, y = event.xdata, event.ydata
+        impedance_handler.update_impedance = 50*complex(x,y)
+
+        if impedance_handler.toogle == 0:
+            impedance_handler.first_impedance = impedance_handler.update_impedance
+            impedance_handler.toogle = 1
+        elif impedance_handler.toogle == 1:
+            impedance_handler.last_impedance = impedance_handler.update_impedance
+
+
+            series_reactance = np.imag(impedance_handler.last_impedance) - np.imag(impedance_handler.first_impedance)
+            impedance_handler.last_susceptance = 1/np.imag(impedance_handler.last_impedance)
+            print(impedance_handler.last_impedance)
+            print(impedance_handler.last_susceptance)
+
+            impedance_handler.first_susceptance = 1 / np.imag(impedance_handler.first_impedance)
+            print(impedance_handler.first_impedance)
+            print(impedance_handler.first_susceptance)
+
+            parallel_susceptance = impedance_handler.last_susceptance - impedance_handler.first_susceptance
+
+            f = 1*1E9
+            w = 2 * np.pi * f
+
+
+            if impedance_handler.element_type == "1":
+                C = (-1)/(series_reactance * w)
+                print("Adding a series capacitor of:", round(C * 1E12, 3), "pF")
+                ZA, movement, type = add_series_capacitor(impedance_handler.first_impedance, C, f)
+            elif impedance_handler.element_type == "2":
+                C = (-1*parallel_susceptance)/w
+                print("Adding a shunt capacitor of:", round(C * 1E12, 3), "pF")
+                ZA, movement, type = add_shunt_capacitor(impedance_handler.first_impedance, C, f)
+            elif impedance_handler.element_type == "3":
+                # add a series inductor
+                L = series_reactance / (w)
+                print("Adding a series inductor of:", round(L * 1E9, 3), "nH")
+                ZA, movement, type = add_series_inductor(impedance_handler.first_impedance, L, f)
+            elif impedance_handler.element_type == "4":
+                L = 1/(parallel_susceptance * w)
+                print(L)
+                print("Adding a shunt inductor of:", round(L * 1E9, 3), "nH")
+                ZA, movement, type = add_shunt_inductor(impedance_handler.first_impedance, L, f)
+            else:
+                print("RF LIB ERR: not available yet")
+
+            plot_smith_movement(movement, type)
+            impedance_handler.first_impedance = impedance_handler.last_impedance
+
+        else:
+            print("RF LIB ERR: boolean type variable")
+
+        update_smith_chart()
+
+
+#def mouse_move(event):
+    #x, y = event.xdata, event.ydata
+    #x = 50*x
+    #y = 50*y
+    #print(complex(1/x,1/y))
+
+
+def key_release(event):
+    if event.key == '1':
+        print("Adds a series capacitor!")
+        impedance_handler.element_type = "1"
+    elif event.key == '2':
+        print("Adds a shunt capacitor!")
+        impedance_handler.element_type = "2"
+    elif event.key == '3':
+        print("Adds a series inductor!")
+        impedance_handler.element_type = "3"
+    elif event.key == '4':
+        print("Adds a shunt inductor!")
+        impedance_handler.element_type = "4"
+
+
+pp.connect('button_press_event', on_press)
+pp.connect('key_release_event', key_release)
+#pp.connect('motion_notify_event', mouse_move)
+
+
 
 
