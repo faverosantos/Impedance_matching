@@ -251,29 +251,33 @@ def add_shunt_capacitor(ZS, C, frequency):
 
     #0. Define the source admitance YS
     #1. Calculate the capacitive reactance XC
-    #2. Define the capactive impedance ZC
-    #3. Do the parallel(ZA) between XC and ZS
-    #4. Invert ZA into admitance(YA)
+    #2. Do the parallel (XA) between XC and XS
+    #3. Invert ZA into admitance (YA)
 
-    ZSOURCE = ZS
+    RS = np.real(ZS)
+    XS = np.imag(ZS)
+
     f = frequency
     w = 2 * np.pi * f
 
     # 0. Define the source admitance YS
     YS = 1/ZS
 
+    BC = -1j* (C * w)
+
+    # 2. Do the parallel(ZA) between XL and XS
+    YA = YS - BC
+    ZA = 1 / YA
+
     # 1. Calculate the capacitive reactance (XC)
-    XC = -1 / (w * C)
+    #XC = -1 / (w * C)
 
-    # 2. Define the capactive impedance ZC
-    RC = 0
-    ZC = RC + 1j*XC
-
-    # 3. Do the parallel(ZA) between XC and ZS
-    ZA = ZS * ZC / (ZS + ZC)
-
-    # 4. Invert ZA into admitance(YA)
-    YA = 1 / ZA
+    # 2. Do the parallel (XA) between XS and XC
+    #XA = XS * XC / (XS + XC)
+    #ZA = complex(RS, XA)
+    #ZA = 1/YA
+    # 3. Invert ZA into admitance (YA)
+    #YA = 1 / ZA
 
     # As a susceptance is being added, it should move along the constant susceptance circle
     #plot_constant_susceptance(YA, YS)
@@ -335,9 +339,11 @@ def add_shunt_inductor(ZS, L, frequency):
 
     #0. Define the source admitance YS
     #1. Calculate the inductive reactance XL
-    #2. Define the inductive impedance ZL
-    #3. Do the parallel(ZA) between XL and ZS
-    #4. Invert ZA into admitance(YA)
+    #2. Do the parallel (XA) between XL and XS
+    #3. Invert ZA into admitance(YA)
+
+    RS = np.real(ZS)
+    XS = np.imag(ZS)
 
     ZSOURCE = ZS
     f = frequency
@@ -346,18 +352,19 @@ def add_shunt_inductor(ZS, L, frequency):
     # 0. Define the source admitance YS
     YS = 1/ZS
 
-    # 1. Calculate the capacitive reactance (XL)
-    XL = w*L
+    # 1. Calculate the inductive reactance (XL)
+    #XL = w*L
+    BL = 1j/(L*w)
 
-    # 2. Define the inductive impedance ZL
-    RL = 0
-    ZL = RL + 1j*XL
+    # 2. Do the parallel(ZA) between XL and XS
+    YA = YS - BL
+    ZA = 1 / YA
 
-    # 3. Do the parallel(ZA) between XC and ZS
-    ZA = ZS * ZL / (ZS + ZL)
+    #ZA = ZS * XL / (ZS + XL)
+    #ZA = complex(RS, XA)
 
-    # 4. Invert ZA into admitance(YA)
-    YA = 1 / ZA
+    # 3. Invert ZA into admitance(YA)
+    #YA = 1 / ZA
 
     # As a susceptance is being added, it should move along the constant susceptance circle
     #plot_constant_susceptance(YA, YS)
@@ -443,7 +450,7 @@ def plot_constant_susceptance(YA, YS):
 
 
 def plot_smith_chart():
-    pp.subplot(1, 1, 1, projection='smith')
+    pp.subplot(1, 1, 1, projection='smith', axes_impedance=50, axes_normalize=False)
     pp.show()
 
 def update_smith_chart():
@@ -456,7 +463,7 @@ def on_press(event):
 
     elif event.button == 1:
         x, y = event.xdata, event.ydata
-        impedance_handler.update_impedance = 50*complex(x,y)
+        impedance_handler.update_impedance = complex(x,y)
 
         if impedance_handler.toogle == 0:
             impedance_handler.first_impedance = impedance_handler.update_impedance
@@ -466,15 +473,11 @@ def on_press(event):
 
 
             series_reactance = np.imag(impedance_handler.last_impedance) - np.imag(impedance_handler.first_impedance)
-            impedance_handler.last_susceptance = 1/np.imag(impedance_handler.last_impedance)
-            print(impedance_handler.last_impedance)
-            print(impedance_handler.last_susceptance)
 
-            impedance_handler.first_susceptance = 1 / np.imag(impedance_handler.first_impedance)
-            print(impedance_handler.first_impedance)
-            print(impedance_handler.first_susceptance)
+            YC = 1/(impedance_handler.last_impedance)
+            YS = 1/impedance_handler.first_impedance
 
-            parallel_susceptance = impedance_handler.last_susceptance - impedance_handler.first_susceptance
+            parallel_susceptance = np.imag(YS - YC)
 
             f = 1*1E9
             w = 2 * np.pi * f
@@ -486,6 +489,7 @@ def on_press(event):
                 ZA, movement, type = add_series_capacitor(impedance_handler.first_impedance, C, f)
             elif impedance_handler.element_type == "2":
                 C = (-1*parallel_susceptance)/w
+                #C = (-1) / (parallel_reactance * w)
                 print("Adding a shunt capacitor of:", round(C * 1E12, 3), "pF")
                 ZA, movement, type = add_shunt_capacitor(impedance_handler.first_impedance, C, f)
             elif impedance_handler.element_type == "3":
@@ -495,7 +499,7 @@ def on_press(event):
                 ZA, movement, type = add_series_inductor(impedance_handler.first_impedance, L, f)
             elif impedance_handler.element_type == "4":
                 L = 1/(parallel_susceptance * w)
-                print(L)
+                #L = parallel_reactance / (w)
                 print("Adding a shunt inductor of:", round(L * 1E9, 3), "nH")
                 ZA, movement, type = add_shunt_inductor(impedance_handler.first_impedance, L, f)
             else:
@@ -507,7 +511,7 @@ def on_press(event):
         else:
             print("RF LIB ERR: boolean type variable")
 
-        update_smith_chart()
+        #update_smith_chart()
 
 
 #def mouse_move(event):
