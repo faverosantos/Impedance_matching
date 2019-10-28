@@ -20,9 +20,10 @@ class impedance:
         self.update_impedance = complex(0, 0)
         self.element_type = "1"
         self.element_disposition = "p"
-        self.movement_list = 0
-        self.movement_type_list = 0
+        self.movement_list = []
+        self.movement_type_list = []
         self.myax = 0
+        self.n_movements = 1
         self.mylines = []
         self.target_impedance = complex(0, 0)
 
@@ -435,8 +436,19 @@ def plot_smith_movement(movement, type):
     elif type == "cte_susceptance":
         impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=10, datatype=SmithAxes.Y_PARAMETER)
 
-    #print(impedance_handler.mylines.__len__())
     pp.draw()
+
+
+def plot_smith_movement_list(movement, type):
+    for i in range(len(movement)):
+        if type[i] == "cte_reactance":
+            pp.plot(movement[i], markevery=1, equipoints=10, datatype=SmithAxes.Z_PARAMETER)
+        elif type[i] == "cte_susceptance":
+            impedance_handler.mylines = pp.plot(movement[i], markevery=1, equipoints=10, datatype=SmithAxes.Y_PARAMETER)
+        elif type[i] == "target_impedance":
+            pp.plot(movement[i], label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
+    pp.draw()
+
 
 def plot_constant_susceptance(YA, YS):
     YS_to_YA = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
@@ -468,12 +480,17 @@ def update_smith_chart():
     pp.draw()
 
 
+def save_movement_to_list(movement, type):
+    impedance_handler.movement_list.append(movement)
+    impedance_handler.movement_type_list.append(type)
+
 def on_press(event):
     if (event.xdata is not None) and (event.ydata is not None):
         if event.button == 3:
             x, y = event.xdata, event.ydata
             impedance_handler.target_impedance = complex(x, y)
-            pp.plot(impedance_handler.target_impedance, label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER)
+            pp.plot(impedance_handler.target_impedance, label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
+            save_movement_to_list(impedance_handler.target_impedance, "target_impedance")
             pp.draw()
             #pp.clf()
 
@@ -486,7 +503,6 @@ def on_press(event):
                 impedance_handler.first_impedance = impedance_handler.update_impedance
                 impedance_handler.toogle = 1
             elif impedance_handler.toogle == 1:
-                clear_smith_chart()
                 impedance_handler.last_impedance = impedance_handler.update_impedance
 
                 series_reactance = np.imag(impedance_handler.last_impedance) - np.imag(impedance_handler.first_impedance)
@@ -521,9 +537,9 @@ def on_press(event):
                 else:
                     print("RF LIB ERR: not available yet")
 
-                plot_smith_movement(movement, type)
-                # save_movement(movement, type)
-                # plot_smith_movement_list(impedance_handler.movement_list, impedance_handler.movement_type_list)
+
+                save_movement_to_list(movement, type)
+                plot_smith_movement_list(impedance_handler.movement_list, impedance_handler.movement_type_list)
                 impedance_handler.first_impedance = impedance_handler.last_impedance
 
             else:
@@ -533,11 +549,11 @@ def on_press(event):
 
 
 def clear_smith_chart():
-    #pp.cla()
+    pp.cla()
     #print("oi")
     #pp.axes.lines[0].remove()
-    print(impedance_handler.mylines.__len__())
-    impedance_handler.myax.lines.remove(impedance_handler.mylines[0::])
+    #print(impedance_handler.mylines.__len__())
+    #impedance_handler.myax.lines.remove(impedance_handler.mylines[0::])
 #:(impedance_handler.mylines.__len__())
 
 def mouse_move(event):
@@ -582,10 +598,9 @@ def mouse_move(event):
         else:
             print("RF LIB ERR: not available yet")
 
-
-
+        clear_smith_chart()
         plot_smith_movement(movement, type)
-        #clear_smith_chart()
+
         # plot_smith_movement_list(impedance_handler.movement_list, impedance_handler.movement_type_list)
 
         # impedance_handler.first_impedance = impedance_handler.last_impedance
