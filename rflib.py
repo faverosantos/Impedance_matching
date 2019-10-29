@@ -26,10 +26,25 @@ class impedance:
         self.target_impedance = complex(0, 0)
         self.frequency = 0
         self.omega = 0
-
+    def clear_all(self):
+        self.toogle = 0
+        self.track_movement = 0
+        self.assign_element = 0
+        self.first_impedance = complex(0, 0)
+        self.last_impedance = complex(0, 0)
+        self.first_susceptance = complex(0, 0)
+        self.last_susceptance = complex(0, 0)
+        self.update_impedance = complex(0, 0)
+        self.element_type = "1"
+        self.movement_list = []
+        self.movement_type_list = []
+        self.n_movements = 1
+        self.target_impedance = complex(0, 0)
 
 impedance_handler = impedance()
 
+def set_target_impedance(ZT):
+    impedance_handler.target_impedance = ZT
 
 def set_operation_frequency(f):
     impedance_handler.frequency = f
@@ -420,9 +435,9 @@ def add_series_inductor(ZS, L, frequency):
 
 def plot_smith_movement(movement, type):
     if type == "cte_reactance":
-        impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Z_PARAMETER, interpolate=False)
+        pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Z_PARAMETER, interpolate=False)
     elif type == "cte_susceptance":
-        impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Y_PARAMETER, interpolate=False)
+        pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Y_PARAMETER, interpolate=False)
     elif type == "target_impedance":
         pp.plot(movement, equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
     pp.draw()
@@ -606,7 +621,10 @@ def key_release(event):
     elif event.key == '4':
         print("Adds a shunt inductor!")
         impedance_handler.element_type = "4"
-
+    elif event.key == 'c':
+        print("Clear all!")
+        impedance_handler.clear_all()
+        set_operation_frequency(1E9)
 
 pp.connect('button_press_event', on_click)
 pp.connect('key_release_event', key_release)

@@ -15,6 +15,7 @@ if __name__ == '__main__':
     mW = 137
 
     rf.set_operation_frequency(f)
+    rf.set_target_impedance(ZLOAD)
     rf.plot_smith_chart()
     #ZA, movement = rf.add_series_inductor(ZSOURCE, 7.611 * 1E-9, f)
     #rf.plot_constant_reactance_movement(movement)
