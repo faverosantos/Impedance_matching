@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 
-
 import rflib as rf
 import numpy as np
 from matplotlib import pyplot as pp

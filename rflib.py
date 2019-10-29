@@ -39,22 +39,6 @@ def degree_to_rad(degree):
     rad = degree * (np.pi / 180)
     return rad
 
-
-# Append N_ZEROS as header and trailer to a signal
-def append_header_and_trailer_to_signal(input_signal, N_ZEROS):
-    return np.concatenate((np.zeros(N_ZEROS), input_signal, np.zeros(N_ZEROS)))
-
-
-# Append N_ZEROS as header to a signal
-def append_header_to_signal(input_signal, N_ZEROS):
-    return np.concatenate((np.zeros(N_ZEROS), input_signal))
-
-
-# Append N_ZEROS as trailer to a signal
-def append_trailer_to_signal(input_signal, N_ZEROS):
-    return np.concatenate((input_signal, np.zeros(N_ZEROS)))
-
-
 def rad_to_degree(rad):
     degree = rad * (180 / np.pi)
     return degree
@@ -436,11 +420,11 @@ def add_series_inductor(ZS, L, frequency):
 
 def plot_smith_movement(movement, type):
     if type == "cte_reactance":
-        impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Z_PARAMETER)
+        impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Z_PARAMETER, interpolate=False)
     elif type == "cte_susceptance":
-        impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Y_PARAMETER)
+        impedance_handler.mylines = pp.plot(movement, markevery=1, equipoints=5, datatype=SmithAxes.Y_PARAMETER, interpolate=False)
     elif type == "target_impedance":
-        pp.plot(movement, label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
+        pp.plot(movement, equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
     pp.draw()
 
 
@@ -451,7 +435,7 @@ def plot_smith_movement_list(movement, type):
         elif type[i] == "cte_susceptance":
             pp.plot(movement[i], markevery=1, equipoints=5, datatype=SmithAxes.Y_PARAMETER)
         elif type[i] == "target_impedance":
-            pp.plot(movement[i], label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
+            pp.plot(movement[i], equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
     pp.draw()
 
 
@@ -476,7 +460,7 @@ def plot_constant_susceptance(YA, YS):
 
 
 def plot_smith_chart():
-    pp.subplot(1, 1, 1, projection='smith', axes_impedance=50, axes_normalize=False)
+    pp.subplot(1, 1, 1, projection='smith', axes_impedance=50, axes_normalize=False, axes_xlabel_rotation=0)
     pp.show()
 
 
@@ -489,8 +473,7 @@ def save_movement_to_list(movement, type):
     impedance_handler.movement_list.append(movement)
     impedance_handler.movement_type_list.append(type)
 
-
-def on_press(event):
+def on_click(event):
     if (event.xdata is not None) and (event.ydata is not None):
 
         if event.button == 2:
@@ -503,7 +486,7 @@ def on_press(event):
         elif event.button == 3:
             x, y = event.xdata, event.ydata
             impedance_handler.target_impedance = complex(x, y)
-            pp.plot(impedance_handler.target_impedance, label="Smith chart", equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
+            pp.plot(impedance_handler.target_impedance, equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
             save_movement_to_list(impedance_handler.target_impedance, "target_impedance")
             pp.draw()
         elif event.button == 1:
@@ -524,22 +507,27 @@ def on_press(event):
 
                 parallel_susceptance = np.imag(YS - YC)
 
+                lcl_string = "oi"
                 if impedance_handler.element_type == "1":
                     C = (-1) / (series_reactance * impedance_handler.omega)
                     print("Adding a series capacitor of:", round(C * 1E12, 3), "pF")
                     ZA, movement, type = add_series_capacitor(impedance_handler.first_impedance, C, impedance_handler.frequency)
+                    lcl_string = "C:" + str(round(C * 1E12, 3)) + "pF"
                 elif impedance_handler.element_type == "2":
                     C = (-1 * parallel_susceptance) / impedance_handler.omega
                     print("Adding a shunt capacitor of:", round(C * 1E12, 3), "pF")
                     ZA, movement, type = add_shunt_capacitor(impedance_handler.first_impedance, C, impedance_handler.frequency)
+                    lcl_string = "C:" + str(round(C * 1E12, 3)) + "pF"
                 elif impedance_handler.element_type == "3":
                     L = series_reactance / impedance_handler.omega
                     print("Adding a series inductor of:", round(L * 1E9, 3), "nH")
                     ZA, movement, type = add_series_inductor(impedance_handler.first_impedance, L, impedance_handler.frequency)
+                    lcl_string = "L:" + str(round(L * 1E9, 3)) + "nH"
                 elif impedance_handler.element_type == "4":
                     L = 1 / (parallel_susceptance * impedance_handler.omega)
                     print("Adding a shunt inductor of:", round(L * 1E9, 3), "nH")
                     ZA, movement, type = add_shunt_inductor(impedance_handler.first_impedance, L, impedance_handler.frequency)
+                    lcl_string = "L:" + str(round(L * 1E9, 3)) + "nH"
                 else:
                     print("RF LIB ERR: not available yet")
 
@@ -560,45 +548,49 @@ def mouse_move(event):
         x, y = event.xdata, event.ydata
         impedance_handler.update_impedance = complex(x, y)
 
-    if impedance_handler.track_movement == 1:
+    if impedance_handler.track_movement == 1 and impedance_handler.toogle == 1:
+        clear_smith_chart()
         impedance_handler.last_impedance = impedance_handler.update_impedance
 
         series_reactance = np.imag(impedance_handler.last_impedance) - np.imag(impedance_handler.first_impedance)
 
-        YC = 1 / (impedance_handler.last_impedance)
+        YC = 1 / impedance_handler.last_impedance
         YS = 1 / impedance_handler.first_impedance
 
         parallel_susceptance = np.imag(YS - YC)
 
+        movement = []
         if impedance_handler.element_type == "1":
             C = (-1) / (series_reactance * impedance_handler.omega)
-            if C < 0:
-                print("RF LIB WAR: movement quadrant is wrong!")
             #print("Adding a series capacitor of:", round(C * 1E12, 3), "pF")
-            ZA, movement, type = add_series_capacitor(impedance_handler.first_impedance, C, impedance_handler.frequency)
+            if C > 0:
+                ZA, movement, type = add_series_capacitor(impedance_handler.first_impedance, C, impedance_handler.frequency)
+            #lcl_string = "C:" + str(round(C * 1E12, 3)) + "pF"
         elif impedance_handler.element_type == "2":
             C = (-1 * parallel_susceptance) / impedance_handler.omega
-            if C < 0:
-                print("RF LIB WAR: movement quadrant is wrong!")
             #print("Adding a shunt capacitor of:", round(C * 1E12, 3), "pF")
-            ZA, movement, type = add_shunt_capacitor(impedance_handler.first_impedance, C, impedance_handler.frequency)
+            if C > 0:
+                ZA, movement, type = add_shunt_capacitor(impedance_handler.first_impedance, C, impedance_handler.frequency)
+            #lcl_string = "C:" + str(round(C * 1E12, 3)) + "pF"
         elif impedance_handler.element_type == "3":
             L = series_reactance / impedance_handler.omega
-            if L < 0:
-                print("RF LIB WAR: movement quadrant is wrong!")
             #print("Adding a series inductor of:", round(L * 1E9, 3), "nH")
-            ZA, movement, type = add_series_inductor(impedance_handler.first_impedance, L, impedance_handler.frequency)
+            if L > 0:
+                ZA, movement, type = add_series_inductor(impedance_handler.first_impedance, L, impedance_handler.frequency)
+            #lcl_string = "L:" + str(round(L * 1E9, 3)) + "nH"
         elif impedance_handler.element_type == "4":
             L = 1 / (parallel_susceptance * impedance_handler.omega)
-            if L < 0:
-                print("RF LIB WAR: movement quadrant is wrong!")
             #print("Adding a shunt inductor of:", round(L * 1E9, 3), "nH")
-            ZA, movement, type = add_shunt_inductor(impedance_handler.first_impedance, L, impedance_handler.frequency)
+            if L > 0:
+                ZA, movement, type = add_shunt_inductor(impedance_handler.first_impedance, L, impedance_handler.frequency)
+            #lcl_string = "L:"+str(round(L * 1E9, 3))+"nH"
         else:
             print("RF LIB ERR: not available yet")
 
-        clear_smith_chart()
-        plot_smith_movement(movement, type)
+        if movement != []:
+            plot_smith_movement(movement, type)
+            if impedance_handler.target_impedance != complex(0,0):
+                pp.plot(impedance_handler.target_impedance, equipoints=1, datatype=SmithAxes.Z_PARAMETER, marker="x")
 
 
 def key_release(event):
@@ -616,6 +608,6 @@ def key_release(event):
         impedance_handler.element_type = "4"
 
 
-pp.connect('button_press_event', on_press)
+pp.connect('button_press_event', on_click)
 pp.connect('key_release_event', key_release)
 pp.connect('motion_notify_event', mouse_move)
