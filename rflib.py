@@ -169,7 +169,7 @@ def lumped_match_impedance(ZS, ZL, frequency):
             ZA_to_ZS[i] = [complex(real, imaginario)]
         # print(ZA_to_ZS)
 
-        pp.figure(figsize=(6, 6))
+        #pp.figure(figsize=(6, 6))
         ax = pp.subplot(1, 1, 1, projection='smith')
         pp.plot([10, 100], markevery=1)
 
@@ -179,7 +179,7 @@ def lumped_match_impedance(ZS, ZL, frequency):
         pp.plot(YL_to_YA, markevery=1, label="YLOAD to YA", equipoints=10, datatype=SmithAxes.Y_PARAMETER)
         pp.plot(ZA_to_ZS, markevery=1, label="ZA to ZSOURCE", equipoints=10, datatype=SmithAxes.Z_PARAMETER)
 
-        leg = pp.legend(loc="lower right", fontsize=10)
+        #leg = pp.legend(loc="lower right", fontsize=10)
         pp.title("Impedance matching for ZLOAD > ZSOURCE", y=-0.01)
         pp.show()
 

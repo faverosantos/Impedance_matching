@@ -16,6 +16,8 @@ IV. By pressing "1", "2", "3" or "4" on the keyboard, user can select which elem
 Note it's important to call "set_operation_frequency(my_chosen_frequency)" before "plot_smith_chart()" as this sets the frequency which all impedances will be calculated.
 
 ## Observations
+1. To install PySmith plot, download the .tar.gz package at https://www.bing.com/search?q=smithplot+python&cvid=035842a3223b4972af53ca1d937aa4c4&aqs=edge..69i57j0l3.2508j0j4&FORM=ANAB01&PC=U531; if using Anaconda, open anaconda cmd prompt, go to the download folder and run pip install [package name].
+
 
 ## To do
 I. Add non-ideal passive models
